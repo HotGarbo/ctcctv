@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 
 <head>
+    <title>CTCCTV</title>
+    <meta name="description" content="12 random streams from CalTrans" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
         html {
@@ -62,11 +64,23 @@
             height: 100%;
             object-fit: cover;
         }
+
+        footer {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            padding: .25em;
+            background: white;
+            color: black;
+            font-family: system-ui, sans-serif;
+            font-size: 14px;
+        }
     </style>
 </head>
 
 <body>
     <main></main>
+    <footer><a href="https://github.com/HotGarbo/ctcctv" target="_blank">About</a></footer>
     <script src="hls.min.js"></script>
     <script>
         const DISTRICTS = [

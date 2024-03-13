@@ -13,17 +13,43 @@
             height: 100%;
             background: black;
         }
+
         main {
             display: grid;
-            grid-template-columns: repeat(2, 50%);
-            grid-template-rows: repeat(6, 16.666%);
+            grid-template-columns: repeat(1, 100%);
+            grid-template-rows: repeat(12, 8.3333%);
             height: 100%;
             overflow: hidden;
         }
-        @media (orientation: landscape) {
+
+        @media (min-aspect-ratio: 2 / 6) and (max-aspect-ratio: 3 / 4) {
+            main {
+                grid-template-columns: repeat(2, 50%);
+                grid-template-rows: repeat(6, 16.6666%);
+            }
+        }
+        @media (min-aspect-ratio: 3 / 4) and (max-aspect-ratio: 4 / 3) {
+            main {
+                grid-template-columns: repeat(3, 33.3333%);
+                grid-template-rows: repeat(4, 25%);
+            }
+        }
+        @media (min-aspect-ratio: 4 / 3) and (max-aspect-ratio: 6 / 2) {
             main {
                 grid-template-columns: repeat(4, 25%);
-                grid-template-rows: repeat(3, 33.333%);
+                grid-template-rows: repeat(3, 33.3333%);
+            }
+        }
+        @media (min-aspect-ratio: 6 / 2) and (max-aspect-ratio: 12 / 1) {
+            main {
+                grid-template-columns: repeat(6, 16.6666%);
+                grid-template-rows: repeat(2, 50%);
+            }
+        }
+        @media (min-aspect-ratio: 12 / 1) {
+            main {
+                grid-template-columns: repeat(12, 8.3333%);
+                grid-template-rows: repeat(1, 100%);
             }
         }
 
@@ -32,6 +58,7 @@
             height: 100%;
             object-fit: cover;
         }
+
     </style>
 </head>
 

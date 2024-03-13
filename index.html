@@ -76,9 +76,9 @@
             //"https://cwwp2.dot.ca.gov/data/d7/cctv/cctvStatusD07.json", // Single broken stream
             "https://cwwp2.dot.ca.gov/data/d8/cctv/cctvStatusD08.json",
             //"https://cwwp2.dot.ca.gov/data/d9/cctv/cctvStatusD09.json", // No streams
-            //"https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json", // Too many without CORS
-            "https://cwwp2.dot.ca.gov/data/d11/cctv/cctvStatusD11.json", 
-            //"https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json", // Too many without CORS
+            "https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json", // Too many without CORS
+            "https://cwwp2.dot.ca.gov/data/d11/cctv/cctvStatusD11.json",
+            "https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json", // Too many without CORS
         ];
         async function loadem() {
             const results = await Promise.allSettled(
@@ -105,21 +105,23 @@
             const vid = document.createElement("video");
             vid.muted = true;
             vid.playsInline = true;
+            //vid.controls = true;
+            vid.title = src;
             vid.autoplay = true;
             const canPlay = vid.canPlayType('application/vnd.apple.mpegurl');
             vid.onloadeddata = (ev) => {
                 console.log("loadeddata", ev);
-                ev.target.play();
-                if (!canPlay) main.appendChild(ev.target);
-                window.vidCount++;
-                popVid();
+                //window.setTimeout((ev) => {ev.target.play()}, 1000 + Math.random() * 1000, ev);
+                //ev.target.play();
+                //if (!canPlay) main.appendChild(ev.target);
+                //window.vidCount++;
             }
             if (canPlay) {
                 vid.src = src;
+                window.vidCount++;
                 main.appendChild(vid);
                 vid.onerror = (ev) => {
-                    ev.target.remove();
-                    popVid();
+                    ev.target.src = window.vidUrls.pop().imageData.streamingVideoURL;
                 }
             } else if (Hls.isSupported()) {
                 var hls = new Hls();
@@ -150,15 +152,16 @@
                 hls.attachMedia(vid);
             }
         }
-        function hlsErr(event, data) {
 
-        }
         async function main() {
             window.vidUrls = shuffle(await loadem());
             window.vidCount = 0;
-            popVid();
+            for (let i=0; i<12; i++) {
+                popVid();
+            }
         }
         main();
+
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
 

@@ -28,24 +28,28 @@
                 grid-template-rows: repeat(6, 16.6666%);
             }
         }
+
         @media (min-aspect-ratio: 3 / 4) and (max-aspect-ratio: 4 / 3) {
             main {
                 grid-template-columns: repeat(3, 33.3333%);
                 grid-template-rows: repeat(4, 25%);
             }
         }
+
         @media (min-aspect-ratio: 4 / 3) and (max-aspect-ratio: 6 / 2) {
             main {
                 grid-template-columns: repeat(4, 25%);
                 grid-template-rows: repeat(3, 33.3333%);
             }
         }
+
         @media (min-aspect-ratio: 6 / 2) and (max-aspect-ratio: 12 / 1) {
             main {
                 grid-template-columns: repeat(6, 16.6666%);
                 grid-template-rows: repeat(2, 50%);
             }
         }
+
         @media (min-aspect-ratio: 12 / 1) {
             main {
                 grid-template-columns: repeat(12, 8.3333%);
@@ -58,13 +62,12 @@
             height: 100%;
             object-fit: cover;
         }
-
     </style>
 </head>
 
 <body>
     <main></main>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+    <script src="hls.min.js"></script>
     <script>
         const DISTRICTS = [
             //"https://cwwp2.dot.ca.gov/data/d1/cctv/cctvStatusD01.json", // No streams
@@ -76,9 +79,9 @@
             //"https://cwwp2.dot.ca.gov/data/d7/cctv/cctvStatusD07.json", // Single broken stream
             "https://cwwp2.dot.ca.gov/data/d8/cctv/cctvStatusD08.json",
             //"https://cwwp2.dot.ca.gov/data/d9/cctv/cctvStatusD09.json", // No streams
-            "https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json", // Too many without CORS
+            "https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json",
             "https://cwwp2.dot.ca.gov/data/d11/cctv/cctvStatusD11.json",
-            "https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json", // Too many without CORS
+            "https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json",
         ];
         async function loadem() {
             const results = await Promise.allSettled(
@@ -96,68 +99,60 @@
             );
             return results.map(o => o.value).flat();
         }
-        function popVid() {
-            if (window.vidCount >= 12) return;
+        function addVid() {
             const main = document.querySelector("main");
             const obj = window.vidUrls.pop();
             const src = obj.imageData.streamingVideoURL;
-            console.debug("popVid", src);
+            console.debug("addVid", src);
             const vid = document.createElement("video");
             vid.muted = true;
             vid.playsInline = true;
-            //vid.controls = true;
-            vid.title = src;
+            vid.controls = true;
             vid.autoplay = true;
-            const canPlay = vid.canPlayType('application/vnd.apple.mpegurl');
-            vid.onloadeddata = (ev) => {
-                console.log("loadeddata", ev);
-                //window.setTimeout((ev) => {ev.target.play()}, 1000 + Math.random() * 1000, ev);
-                //ev.target.play();
-                //if (!canPlay) main.appendChild(ev.target);
-                //window.vidCount++;
-            }
-            if (canPlay) {
-                vid.src = src;
-                window.vidCount++;
-                main.appendChild(vid);
+            main.appendChild(vid);
+            if (window.canPlayNative) {
                 vid.onerror = (ev) => {
+                    // Try another stream
+                    console.log(ev);
                     ev.target.src = window.vidUrls.pop().imageData.streamingVideoURL;
                 }
+                vid.src = src;
             } else if (Hls.isSupported()) {
-                var hls = new Hls();
-                hls.on(Hls.Events.ERROR, function (event, data) {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.log('fatal media error encountered, try to recover');
-                                hls.recoverMediaError();
-                                break;
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.error('fatal network error encountered', data);
-                            // All retries and media options have been exhausted.
-                            // Immediately trying to restart loading could cause loop loading.
-                            // Consider modifying loading policies to best fit your asset and network
-                            // conditions (manifestLoadPolicy, playlistLoadPolicy, fragLoadPolicy).
-                            default:
-                                // cannot recover
-                                console.log("default case");
-                                popVid();
-                                vid.remove();
-                                hls.destroy();
-                                break;
-                        }
-                    }
-                });
-                hls.loadSource(src);
-                hls.attachMedia(vid);
+                createHls(vid, src);
             }
+        }
+        function createHls(vid, src) {
+            var hls = new Hls();
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log('fatal media error encountered, try to recover');
+                            hls.recoverMediaError();
+                            break;
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.error('fatal network error encountered', data);
+                        // All retries and media options have been exhausted.
+                        // Immediately trying to restart loading could cause loop loading.
+                        // Consider modifying loading policies to best fit your asset and network
+                        // conditions (manifestLoadPolicy, playlistLoadPolicy, fragLoadPolicy).
+                        default:
+                            // cannot recover
+                            hls.destroy();
+                            createHls(vid, window.vidUrls.pop().imageData.streamingVideoURL);
+                            break;
+                    }
+                }
+            });
+            hls.loadSource(src);
+            hls.attachMedia(vid);
         }
 
         async function main() {
             window.vidUrls = shuffle(await loadem());
-            window.vidCount = 0;
-            for (let i=0; i<12; i++) {
-                popVid();
+            window.canPlayNative = document.createElement("video").canPlayType('application/vnd.apple.mpegurl');
+            for (let i = 0; i < 12; i++) {
+                addVid();
             }
         }
         main();
